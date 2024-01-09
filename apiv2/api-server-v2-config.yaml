@@ -1,0 +1,4 @@
+package: apiv2
+generate:
+  models: true
+  client: true
