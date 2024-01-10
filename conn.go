@@ -23,6 +23,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/textproto"
 	"sync"
@@ -91,7 +92,14 @@ func (c *conn) ExecContext(ctx context.Context, query string, args []driver.Name
 		return nil, driver.ErrBadConn
 	}
 
-	_, err := c.submitStatement(ctx, query)
+	var attchments map[string]io.ReadCloser
+	if v := ctx.Value(sqlRequestAttachmentsKey); v != nil {
+		if v, ok := v.(*sqlRequestAttachments); ok {
+			attchments = v.attachments
+		}
+	}
+
+	_, err := c.submitStatement(ctx, attchments, query)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +112,14 @@ func (c *conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 		return nil, driver.ErrBadConn
 	}
 
-	rs, err := c.submitStatement(ctx, query)
+	var attchments map[string]io.ReadCloser
+	if v := ctx.Value(sqlRequestAttachmentsKey); v != nil {
+		if v, ok := v.(*sqlRequestAttachments); ok {
+			attchments = v.attachments
+		}
+	}
+
+	rs, err := c.submitStatement(ctx, attchments, query)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +143,6 @@ func (c *conn) setResultSetContext(rsctx *apiv2.ResultSetContext) {
 	c.Lock()
 	defer c.Unlock()
 	c.rsctx = rsctx
-	fmt.Println("set", c.rsctx.OrganizationID, c.rsctx.RoleName)
 }
 
 func (c *conn) getResultSetContext() (rsctx *apiv2.ResultSetContext) {
@@ -137,7 +151,7 @@ func (c *conn) getResultSetContext() (rsctx *apiv2.ResultSetContext) {
 	return c.rsctx
 }
 
-func (c *conn) submitStatement(ctx context.Context, query string) (rs *apiv2.ResultSet, err error) {
+func (c *conn) submitStatement(ctx context.Context, attachments map[string]io.ReadCloser, query string) (rs *apiv2.ResultSet, err error) {
 	if c.client == nil {
 		return nil, sql.ErrConnDone
 	}
@@ -168,6 +182,18 @@ func (c *conn) submitStatement(ctx context.Context, query string) (rs *apiv2.Res
 	if err = json.NewEncoder(part).Encode(request); err != nil {
 		return nil, &ErrClientError{message: "error building request", wrapErr: err}
 	}
+
+	for k, f := range attachments {
+		w, err := writer.CreateFormFile("attachment", k)
+		if err != nil {
+			return nil, &ErrClientError{message: "error building request", wrapErr: err}
+		}
+		_, err = io.Copy(w, f)
+		if err != nil {
+			return nil, &ErrClientError{message: "error building request", wrapErr: err}
+		}
+	}
+
 	writer.Close()
 
 	resp, err := c.client.SubmitStatementWithBodyWithResponse(ctx, writer.FormDataContentType(), body)
@@ -219,8 +245,15 @@ func (c *conn) getStatement(ctx context.Context, statementID uuid.UUID, partitio
 		}
 		switch {
 		case resp.JSON200 != nil:
-			c.setResultSetContext(resp.JSON200.Metadata.Context)
-			return resp.JSON200, nil
+			if resp.JSON200.SqlState == string(SqlStateSuccessfulCompletion) {
+				c.setResultSetContext(resp.JSON200.Metadata.Context)
+				return resp.JSON200, nil
+			}
+			return nil, ErrSQLError{
+				SQLCode:     SqlState(resp.JSON200.SqlState),
+				Message:     ptr.Deref(resp.JSON200.Message, ""),
+				StatementID: resp.JSON200.StatementID,
+			}
 		case resp.JSON202 != nil:
 			continue
 		case resp.JSON400 != nil:

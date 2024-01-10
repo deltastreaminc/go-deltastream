@@ -42,7 +42,7 @@ func TestDatatypes(t *testing.T) {
 	})
 
 	httpmock.RegisterResponder("POST", "https://api.deltastream.io/v2/statements",
-		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "TEST DATATYPES;", "fixtures/test-datatypes-200-00000-4.json"),
+		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "TEST DATATYPES;", map[string][]byte{}, "fixtures/test-datatypes-200-00000-4.json"),
 	)
 
 	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
