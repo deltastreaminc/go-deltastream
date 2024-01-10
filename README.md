@@ -4,6 +4,8 @@ DeltaStream Golang database/sql driver for DeltaStream(http://deltastream.io).
 
 DeltaStream is a fully managed stream processing platform powered by [Apache Flink®]
 
+# This module is in active development. DO NOT USE.
+
 -----
 
 ## License

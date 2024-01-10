@@ -19,7 +19,7 @@ import (
 	"github.com/deltastreaminc/go-deltastream/apiv2"
 )
 
-func mockSubmitStatementsResponser(g *gomega.WithT, statusCode int, expectedToken, expectedSQL, fixture string) func(r *http.Request) (*http.Response, error) {
+func mockSubmitStatementsResponser(g *gomega.WithT, statusCode int, expectedToken, expectedSQL string, expectedAttachments map[string][]byte, fixture string) func(r *http.Request) (*http.Response, error) {
 	return func(r *http.Request) (*http.Response, error) {
 		if h, ok := r.Header["Authorization"]; !ok || h[0] != "Bearer sometoken" {
 			return &http.Response{StatusCode: http.StatusUnauthorized, Body: io.NopCloser(bytes.NewBufferString(`{ "message": "no token" }`))}, nil
@@ -30,14 +30,29 @@ func mockSubmitStatementsResponser(g *gomega.WithT, statusCode int, expectedToke
 		g.Expect(mediaType).Should(ContainSubstring("multipart/"))
 
 		mr := multipart.NewReader(r.Body, params["boundary"])
-		p, err := mr.NextPart()
-		g.Expect(err).To(BeNil())
-
-		g.Expect(p.Header.Get("Content-Type")).To(Equal("application/json"))
-		req := &apiv2.SubmitStatementJSONRequestBody{}
-		err = json.NewDecoder(p).Decode(req)
-		g.Expect(err).To(BeNil())
-		g.Expect(req.Statement).To(Equal(expectedSQL))
+		for {
+			p, err := mr.NextPart()
+			if err == io.EOF {
+				break
+			}
+			switch p.FormName() {
+			case "request":
+				g.Expect(p.Header.Get("Content-Type")).To(Equal("application/json"))
+				req := &apiv2.SubmitStatementJSONRequestBody{}
+				err = json.NewDecoder(p).Decode(req)
+				g.Expect(err).To(BeNil())
+				g.Expect(req.Statement).To(Equal(expectedSQL))
+			case "attachment":
+				name := p.FileName()
+				data, err := io.ReadAll(p)
+				g.Expect(err).To(BeNil())
+				attachment, ok := expectedAttachments[name]
+				g.Expect(ok).To(BeTrue())
+				g.Expect(attachment).To(Equal(data))
+				delete(expectedAttachments, name)
+			}
+		}
+		g.Expect(expectedAttachments).To(BeEmpty())
 
 		f, err := os.OpenFile(fixture, os.O_RDONLY, 0600)
 		g.Expect(err).To(BeNil())
@@ -74,7 +89,7 @@ func TestSimpleResultset(t *testing.T) {
 	})
 
 	httpmock.RegisterResponder("POST", "https://api.deltastream.io/v2/statements",
-		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "LIST ORGANIZATIONS;", "fixtures/list-organizations-200-00000-1.json"),
+		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "LIST ORGANIZATIONS;", map[string][]byte{}, "fixtures/list-organizations-200-00000-1.json"),
 	)
 
 	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
@@ -116,7 +131,7 @@ func TestEmptyResultset(t *testing.T) {
 	})
 
 	httpmock.RegisterResponder("POST", "https://api.deltastream.io/v2/statements",
-		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "LIST ORGANIZATIONS;", "fixtures/list-organizations-200-00000-0.json"),
+		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "LIST ORGANIZATIONS;", map[string][]byte{}, "fixtures/list-organizations-200-00000-0.json"),
 	)
 	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
 	g.Expect(err).To(BeNil())
@@ -142,7 +157,7 @@ func TestDelayedResultset(t *testing.T) {
 	})
 
 	count := 0
-	httpmock.RegisterResponder("POST", "https://api.deltastream.io/v2/statements", mockSubmitStatementsResponser(g, http.StatusAccepted, "sometoken", "LIST ORGANIZATIONS;", "fixtures/list-organizations-202-03000.json"))
+	httpmock.RegisterResponder("POST", "https://api.deltastream.io/v2/statements", mockSubmitStatementsResponser(g, http.StatusAccepted, "sometoken", "LIST ORGANIZATIONS;", map[string][]byte{}, "fixtures/list-organizations-202-03000.json"))
 	httpmock.RegisterResponder("GET", "https://api.deltastream.io/v2/statements/d789687d-4e1b-4649-846e-4f10b722f3ad?partitionID=0&timezone=UTC", func(r *http.Request) (*http.Response, error) {
 		if count < 3 {
 			count = count + 1
