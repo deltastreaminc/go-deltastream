@@ -42,7 +42,7 @@ func mockSubmitStatementsResponser(g *gomega.WithT, statusCode int, expectedToke
 				err = json.NewDecoder(p).Decode(req)
 				g.Expect(err).To(BeNil())
 				g.Expect(req.Statement).To(Equal(expectedSQL))
-			case "attachment":
+			case "attachments":
 				name := p.FileName()
 				data, err := io.ReadAll(p)
 				g.Expect(err).To(BeNil())
