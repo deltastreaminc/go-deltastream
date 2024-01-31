@@ -184,7 +184,7 @@ func (c *conn) submitStatement(ctx context.Context, attachments map[string]io.Re
 	}
 
 	for k, f := range attachments {
-		w, err := writer.CreateFormFile("attachment", k)
+		w, err := writer.CreateFormFile("attachments", k)
 		if err != nil {
 			return nil, &ErrClientError{message: "error building request", wrapErr: err}
 		}
