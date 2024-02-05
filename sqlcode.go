@@ -29,6 +29,8 @@ const (
 	SqlState3D011  SqlState = "3D011"
 	SqlState3D012  SqlState = "3D012"
 	SqlState3D013  SqlState = "3D013"
+	SqlState3D014  SqlState = "3D014"
+	SqlState3D015  SqlState = "3D015"
 	SqlState3E001  SqlState = "3E001"
 	SqlState3E002  SqlState = "3E002"
 	SqlState3E003  SqlState = "3E003"
@@ -43,6 +45,8 @@ const (
 	SqlState42P08  SqlState = "42P08"
 	SqlState42P09  SqlState = "42P09"
 	SqlState42P10  SqlState = "42P010"
+	SqlState42P11  SqlState = "42P011"
+	SqlState42P12  SqlState = "42P012"
 	SqlState42P001 SqlState = "42P001"
 	SqlState42P002 SqlState = "42P002"
 	SqlState57014  SqlState = "57014"
@@ -103,6 +107,8 @@ const (
 	SqlStateInvalidDescriptorSource    = SqlState3D011
 	SqlStateInvalidApiToken            = SqlState3D012
 	SqlStateInvalidSecurityIntegration = SqlState3D013
+	SqlStateInvalidMetricsIntegration  = SqlState3D014
+	SqlStateInvalidSandbox             = SqlState3D015
 
 	// Class 3E — Resource not ready
 
@@ -123,6 +129,8 @@ const (
 	SqlStateDuplicateTopicDescriptor     = SqlState42P08
 	SqlStateDuplicateApiToken            = SqlState42P09
 	SqlStateDuplicateSecurityIntegration = SqlState42P10
+	SqlStateDuplicateRole                = SqlState42P11
+	SqlStateDuplicateMetricsIntegration  = SqlState42P12
 	SqlStateAmbiguousOrganization        = SqlState42P001
 	SqlStateAmbiguousStore               = SqlState42P002
 
