@@ -175,6 +175,8 @@ func (r *resultSetRows) Next(dest []driver.Value) error {
 		switch {
 		case rowData[idx] == nil:
 			dest[idx] = nil
+		default:
+			fallthrough
 		case strings.HasPrefix(col.Type, "VARCHAR") || strings.HasPrefix(col.Type, "ARRAY") || strings.HasPrefix(col.Type, "MAP") || strings.HasPrefix(col.Type, "STRUCT"):
 			dest[idx] = *rowData[idx]
 		case col.Type == "TINYINT" || col.Type == "SMALLINT" || col.Type == "INTEGER" || col.Type == "BIGINT":

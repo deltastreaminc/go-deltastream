@@ -277,7 +277,7 @@ func (c *Conn) getStatement(ctx context.Context, statementID uuid.UUID, partitio
 		case resp.JSON202 != nil:
 			continue
 		case resp.JSON400 != nil:
-			return nil, &ErrClientError{message: resp.JSON400.Message}
+			return nil, &ErrInterfaceError{message: resp.JSON400.Message}
 		case resp.JSON403 != nil:
 			return nil, errors.Errorf(resp.JSON403.Message+": %w", ErrAuthenticationError)
 		case resp.JSON404 != nil:
