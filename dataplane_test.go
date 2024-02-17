@@ -24,17 +24,12 @@ import (
 	"net/http"
 	"testing"
 
-	_ "embed"
-
 	"github.com/jarcoal/httpmock"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 )
 
-//go:embed fixtures/testattachment.blob
-var attachmentData []byte
-
-func TestAttachments(t *testing.T) {
+func TestDPConn_Query(t *testing.T) {
 	g := gomega.NewWithT(t)
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -47,14 +42,30 @@ func TestAttachments(t *testing.T) {
 	})
 
 	httpmock.RegisterResponder("POST", "https://api.deltastream.io/v2/statements",
-		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "LIST ORGANIZATIONS;", map[string][]byte{"test.blob": attachmentData}, "fixtures/list-organizations-200-00000-0.json"),
+		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "SELECT * FROM mview_table;", map[string][]byte{}, "fixtures/dataplane-query-200-00000-0.json"),
+	)
+
+	httpmock.RegisterResponder("GET", "https://dpapi.deltastream.io/v2/statements/d789687d-4e1b-4649-846e-4f10b722f3ad?partitionID=0&timezone=UTC",
+		mockGetStatementResponser(g, http.StatusOK, "dataplanetoken", "fixtures/list-organizations-200-00000-1.json"),
 	)
 
 	db, err := sql.Open("deltastream", "https://_:sometoken@api.deltastream.io/v2?")
 	g.Expect(err).To(BeNil())
 
 	ctx := context.Background()
-	ctx = WithAttachment(ctx, "test.blob", io.NopCloser(bytes.NewBuffer(attachmentData)))
-	_, err = db.QueryContext(ctx, "LIST ORGANIZATIONS;")
+	rows, err := db.QueryContext(ctx, "SELECT * FROM mview_table;")
 	g.Expect(err).To(BeNil())
+
+	g.Expect(rows.Columns()).To(Equal([]string{"id", "name", "description", "profileImageURI", "createdAt"}))
+
+	var (
+		id      string
+		discard any
+	)
+	for rows.Next() {
+		err = rows.Scan(&id, &discard, &discard, &discard, &discard)
+		g.Expect(err).To(BeNil())
+	}
+	g.Expect(rows.Err()).To(BeNil())
+	g.Expect(id).To(Equal("0e0e3617-3cd6-4407-a189-97daf226c4d4"))
 }

@@ -45,7 +45,7 @@ func TestDatatypes(t *testing.T) {
 		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "TEST DATATYPES;", map[string][]byte{}, "fixtures/test-datatypes-200-00000-4.json"),
 	)
 
-	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
+	db, err := sql.Open("deltastream", "https://_:sometoken@api.deltastream.io/v2")
 	g.Expect(err).To(BeNil())
 
 	rows, err := db.Query("TEST DATATYPES;")

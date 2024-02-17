@@ -1,0 +1,4 @@
+package: dpapiv2
+generate:
+  models: true
+  client: true
