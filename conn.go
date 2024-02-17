@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"net/textproto"
 	"sync"
 	"time"
@@ -38,35 +39,40 @@ import (
 
 // Compile time validation that our types implement the expected interfaces
 var (
-	_ driver.Conn           = &conn{} // Conn is a connection to a database. Stateful and not multi-goroutine safe.
-	_ driver.Pinger         = &conn{} // Check DB connection. Used for pooling. Returns ErrBadConn if in bad state.
-	_ driver.Execer         = &conn{} // Provide exec function on conn without having to prepare a statement
-	_ driver.ExecerContext  = &conn{} // ditto with context
-	_ driver.Queryer        = &conn{} // Provide query function on conn without having to prepare a statement
-	_ driver.QueryerContext = &conn{} // ditto with context
+	_ driver.Conn           = &Conn{} // Conn is a connection to a database. Stateful and not multi-goroutine safe.
+	_ driver.Pinger         = &Conn{} // Check DB connection. Used for pooling. Returns ErrBadConn if in bad state.
+	_ driver.Execer         = &Conn{} // Provide exec function on conn without having to prepare a statement
+	_ driver.ExecerContext  = &Conn{} // ditto with context
+	_ driver.Queryer        = &Conn{} // Provide query function on conn without having to prepare a statement
+	_ driver.QueryerContext = &Conn{} // ditto with context
 )
 
-type conn struct {
-	client    *apiv2.ClientWithResponses
-	rsctx     *apiv2.ResultSetContext
-	sessionID *string
+type Conn struct {
+	client     *apiv2.ClientWithResponses
+	rsctx      *apiv2.ResultSetContext
+	httpClient *http.Client
+	sessionID  *string
 	sync.RWMutex
 }
 
 // region driver.Conn
 
-func (*conn) Begin() (driver.Tx, error) {
+func (*Conn) Begin() (driver.Tx, error) {
 	return nil, ErrNotSupported
 }
 
 // Close implements driver.Conn.
-func (c *conn) Close() error {
+func (c *Conn) Close() error {
 	c.client = nil
 	return nil
 }
 
+func (c *Conn) GetContext() apiv2.ResultSetContext {
+	return *c.rsctx
+}
+
 // Prepare implements driver.Conn.
-func (c *conn) Prepare(query string) (driver.Stmt, error) {
+func (c *Conn) Prepare(query string) (driver.Stmt, error) {
 	if c.client == nil {
 		return nil, driver.ErrBadConn
 	}
@@ -79,15 +85,15 @@ func (c *conn) Prepare(query string) (driver.Stmt, error) {
 
 // endregion
 
-func (c *conn) Query(query string, args []driver.Value) (driver.Rows, error) {
+func (c *Conn) Query(query string, args []driver.Value) (driver.Rows, error) {
 	return c.QueryContext(context.TODO(), query, convertArgs(args))
 }
 
-func (c *conn) Exec(query string, args []driver.Value) (driver.Result, error) {
+func (c *Conn) Exec(query string, args []driver.Value) (driver.Result, error) {
 	return c.ExecContext(context.TODO(), query, convertArgs(args))
 }
 
-func (c *conn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+func (c *Conn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	if c == nil {
 		return nil, driver.ErrBadConn
 	}
@@ -107,7 +113,7 @@ func (c *conn) ExecContext(ctx context.Context, query string, args []driver.Name
 	return &result{}, nil
 }
 
-func (c *conn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+func (c *Conn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
 	if c == nil {
 		return nil, driver.ErrBadConn
 	}
@@ -124,11 +130,25 @@ func (c *conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 		return nil, err
 	}
 
-	return &rows{ctx: ctx, conn: c, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs}, nil
+	if rs.Metadata.DataplaneRequest != nil {
+		if rs.Metadata.DataplaneRequest.RequestType == apiv2.DataplaneRequestRequestTypeResultSet {
+			dpconn, err := NewDPConn(*rs.Metadata.DataplaneRequest, c.sessionID, c.httpClient)
+			if err != nil {
+				return nil, &ErrClientError{message: err.Error()}
+			}
+			rs, err := dpconn.getStatement(ctx, rs.StatementID, 0)
+			if err != nil {
+				return nil, err
+			}
+			return &resultSetRows{ctx: ctx, conn: dpconn, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs}, nil
+		}
+		return newStreamingRows(ctx, *rs.Metadata.DataplaneRequest, c.httpClient, c.sessionID)
+	}
 
+	return &resultSetRows{ctx: ctx, conn: c, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs}, nil
 }
 
-func (c *conn) Ping(ctx context.Context) error {
+func (c *Conn) Ping(ctx context.Context) error {
 	resp, err := c.client.GetVersion(ctx)
 	if err != nil {
 		return err
@@ -139,19 +159,19 @@ func (c *conn) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (c *conn) setResultSetContext(rsctx *apiv2.ResultSetContext) {
+func (c *Conn) setResultSetContext(rsctx *apiv2.ResultSetContext) {
 	c.Lock()
 	defer c.Unlock()
 	c.rsctx = rsctx
 }
 
-func (c *conn) getResultSetContext() (rsctx *apiv2.ResultSetContext) {
+func (c *Conn) getResultSetContext() (rsctx *apiv2.ResultSetContext) {
 	c.RLock()
 	defer c.RUnlock()
 	return c.rsctx
 }
 
-func (c *conn) submitStatement(ctx context.Context, attachments map[string]io.ReadCloser, query string) (rs *apiv2.ResultSet, err error) {
+func (c *Conn) submitStatement(ctx context.Context, attachments map[string]io.ReadCloser, query string) (rs *apiv2.ResultSet, err error) {
 	if c.client == nil {
 		return nil, sql.ErrConnDone
 	}
@@ -230,7 +250,7 @@ func (c *conn) submitStatement(ctx context.Context, attachments map[string]io.Re
 	}
 }
 
-func (c *conn) getStatement(ctx context.Context, statementID uuid.UUID, partitionID int32) (rs *apiv2.ResultSet, err error) {
+func (c *Conn) getStatement(ctx context.Context, statementID uuid.UUID, partitionID int32) (rs *apiv2.ResultSet, err error) {
 	if c.client == nil {
 		return nil, sql.ErrConnDone
 	}

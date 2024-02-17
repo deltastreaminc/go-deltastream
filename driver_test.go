@@ -40,13 +40,10 @@ func TestPing(t *testing.T) {
 	})
 
 	g := gomega.NewWithT(t)
-	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2")
-	g.Expect(err).To(BeNil())
+	_, err := sql.Open("deltastream", "https://api.deltastream.io/v2")
+	g.Expect(err).To(MatchError(&ErrClientError{message: "no api token provided"}))
 
-	err = db.Ping()
-	g.Expect(err).Should(MatchError(&ErrClientError{message: "no api token provided"}))
-
-	db, err = sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
+	db, err := sql.Open("deltastream", "https://_:sometoken@api.deltastream.io/v2")
 	g.Expect(err).To(BeNil())
 
 	err = db.Ping()
@@ -55,7 +52,7 @@ func TestPing(t *testing.T) {
 
 func TestTransactionRetrunsError(t *testing.T) {
 	g := gomega.NewWithT(t)
-	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
+	db, err := sql.Open("deltastream", "https://_:sometoken@api.deltastream.io/v2")
 	g.Expect(err).To(BeNil())
 
 	_, err = db.Begin()

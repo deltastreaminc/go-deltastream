@@ -1,3 +1,19 @@
+/*
+Copyright (c) 2024-present, DeltaStream Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package godeltastream
 
 import (
@@ -12,14 +28,15 @@ import (
 	"time"
 
 	"github.com/deltastreaminc/go-deltastream/apiv2"
+	"github.com/google/uuid"
 )
 
 // Compile time validation that our types implement the expected interfaces
 var (
-	_ driver.Rows                           = &rows{}
-	_ driver.RowsColumnTypeScanType         = &rows{}
-	_ driver.RowsColumnTypeDatabaseTypeName = &rows{}
-	_ driver.RowsColumnTypeNullable         = &rows{}
+	_ driver.Rows                           = &resultSetRows{}
+	_ driver.RowsColumnTypeScanType         = &resultSetRows{}
+	_ driver.RowsColumnTypeDatabaseTypeName = &resultSetRows{}
+	_ driver.RowsColumnTypeNullable         = &resultSetRows{}
 	// _ driver.RowsColumnTypeLength           = &rows{}
 	// _ driver.RowsColumnTypePrecisionScale   = &rows{}
 )
@@ -50,8 +67,12 @@ func init() {
 	}
 }
 
-type rows struct {
-	conn *conn
+type ResultSetConn interface {
+	getStatement(ctx context.Context, statementID uuid.UUID, partitionID int32) (rs *apiv2.ResultSet, err error)
+}
+
+type resultSetRows struct {
+	conn ResultSetConn
 	ctx  context.Context
 
 	currentRowIdx       int32
@@ -60,7 +81,7 @@ type rows struct {
 	currentResultSet *apiv2.ResultSet
 }
 
-func (r *rows) ColumnTypeNullable(index int) (nullable bool, ok bool) {
+func (r *resultSetRows) ColumnTypeNullable(index int) (nullable bool, ok bool) {
 	if index < 0 || index >= len(r.currentResultSet.Metadata.Columns) {
 		return false, false
 	}
@@ -68,7 +89,7 @@ func (r *rows) ColumnTypeNullable(index int) (nullable bool, ok bool) {
 	return md.Nullable, true
 }
 
-func (r *rows) ColumnTypeDatabaseTypeName(index int) string {
+func (r *resultSetRows) ColumnTypeDatabaseTypeName(index int) string {
 	if index < 0 || index >= len(r.currentResultSet.Metadata.Columns) {
 		return ""
 	}
@@ -77,7 +98,7 @@ func (r *rows) ColumnTypeDatabaseTypeName(index int) string {
 }
 
 // ColumnTypeScanType implements driver.RowsColumnTypeScanType.
-func (r *rows) ColumnTypeScanType(index int) reflect.Type {
+func (r *resultSetRows) ColumnTypeScanType(index int) reflect.Type {
 	if index < 0 || index >= len(r.currentResultSet.Metadata.Columns) {
 		return nil
 	}
@@ -103,7 +124,7 @@ func (r *rows) ColumnTypeScanType(index int) reflect.Type {
 }
 
 // Close implements driver.Rows.
-func (r *rows) Close() error {
+func (r *resultSetRows) Close() error {
 	r.conn = nil
 	return nil
 }
@@ -112,7 +133,7 @@ func (r *rows) Close() error {
 // columns of the result is inferred from the length of the
 // slice. If a particular column name isn't known, an empty
 // string should be returned for that entry.
-func (r *rows) Columns() []string {
+func (r *resultSetRows) Columns() []string {
 	cols := []string{}
 	for _, c := range r.currentResultSet.Metadata.Columns {
 		cols = append(cols, c.Name)
@@ -130,7 +151,7 @@ func (r *rows) Columns() []string {
 // The dest should not be written to outside of Next. Care
 // should be taken when closing Rows not to modify
 // a buffer held in dest.
-func (r *rows) Next(dest []driver.Value) error {
+func (r *resultSetRows) Next(dest []driver.Value) error {
 	rowIdx, partIdx := r.calcPartitionIdx(r.currentRowIdx + 1)
 	if partIdx == -1 {
 		return io.EOF
@@ -143,8 +164,8 @@ func (r *rows) Next(dest []driver.Value) error {
 		r.currentPartitionIdx = partIdx
 		r.currentResultSet = resp
 	}
-	r.currentRowIdx = rowIdx
-	rowData := r.currentResultSet.Data[r.currentRowIdx]
+	r.currentRowIdx += 1
+	rowData := (*r.currentResultSet.Data)[rowIdx]
 	if len(rowData) != len(dest) {
 		return &ErrClientError{message: fmt.Sprintf("number of columns does not match size of result slice. expected %d, got %d", len(rowData), len(dest))}
 	}
@@ -154,6 +175,8 @@ func (r *rows) Next(dest []driver.Value) error {
 		switch {
 		case rowData[idx] == nil:
 			dest[idx] = nil
+		default:
+			fallthrough
 		case strings.HasPrefix(col.Type, "VARCHAR") || strings.HasPrefix(col.Type, "ARRAY") || strings.HasPrefix(col.Type, "MAP") || strings.HasPrefix(col.Type, "STRUCT"):
 			dest[idx] = *rowData[idx]
 		case col.Type == "TINYINT" || col.Type == "SMALLINT" || col.Type == "INTEGER" || col.Type == "BIGINT":
@@ -183,7 +206,7 @@ func (r *rows) Next(dest []driver.Value) error {
 	return nil
 }
 
-func (r *rows) calcPartitionIdx(rowIdx int32) (row, part int32) {
+func (r *resultSetRows) calcPartitionIdx(rowIdx int32) (row, part int32) {
 	for pIdx, p := range r.currentResultSet.Metadata.PartitionInfo {
 		if rowIdx < p.RowCount {
 			return rowIdx, int32(pIdx)

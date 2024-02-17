@@ -1,3 +1,19 @@
+/*
+Copyright (c) 2024-present, DeltaStream Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package godeltastream
 
 import (
@@ -64,7 +80,7 @@ func mockSubmitStatementsResponser(g *gomega.WithT, statusCode int, expectedToke
 
 func mockGetStatementResponser(g *gomega.WithT, statusCode int, expectedToken, fixture string) func(r *http.Request) (*http.Response, error) {
 	return func(r *http.Request) (*http.Response, error) {
-		if h, ok := r.Header["Authorization"]; !ok || h[0] != "Bearer sometoken" {
+		if h, ok := r.Header["Authorization"]; !ok || h[0] != "Bearer "+expectedToken {
 			return &http.Response{StatusCode: http.StatusUnauthorized, Body: io.NopCloser(bytes.NewBufferString(`{ "message": "no token" }`))}, nil
 		}
 
@@ -92,7 +108,7 @@ func TestSimpleResultset(t *testing.T) {
 		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "LIST ORGANIZATIONS;", map[string][]byte{}, "fixtures/list-organizations-200-00000-1.json"),
 	)
 
-	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
+	db, err := sql.Open("deltastream", "https://_:sometoken@api.deltastream.io/v2")
 	g.Expect(err).To(BeNil())
 
 	rows, err := db.Query("LIST ORGANIZATIONS;")
@@ -133,7 +149,7 @@ func TestEmptyResultset(t *testing.T) {
 	httpmock.RegisterResponder("POST", "https://api.deltastream.io/v2/statements",
 		mockSubmitStatementsResponser(g, http.StatusOK, "sometoken", "LIST ORGANIZATIONS;", map[string][]byte{}, "fixtures/list-organizations-200-00000-0.json"),
 	)
-	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
+	db, err := sql.Open("deltastream", "https://_:sometoken@api.deltastream.io/v2")
 	g.Expect(err).To(BeNil())
 
 	rows, err := db.Query("LIST ORGANIZATIONS;")
@@ -166,7 +182,7 @@ func TestDelayedResultset(t *testing.T) {
 		return mockGetStatementResponser(g, http.StatusOK, "sometoken", "fixtures/list-organizations-200-00000-1.json")(r)
 	})
 
-	db, err := sql.Open("deltastream", "https://api.deltastream.io/v2?token=sometoken")
+	db, err := sql.Open("deltastream", "https://_:sometoken@api.deltastream.io/v2")
 	g.Expect(err).To(BeNil())
 
 	rows, err := db.Query("LIST ORGANIZATIONS;")

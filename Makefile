@@ -16,15 +16,18 @@ export GOBIN
 
 OAIGEN := $(GOBIN)/oapi-codegen
 
-all: apiv2/zz_generated.api.go
+all: apiv2/zz_generated.api.go dpapiv2/zz_generated.api.go
 	go test ./...
 
 apiv2/zz_generated.api.go: apiv2/api-server-v2.yaml apiv2/api-server-v2-config.yaml | $(OAIGEN)
 	$(OAIGEN) --config apiv2/api-server-v2-config.yaml apiv2/api-server-v2.yaml > $@
+
+dpapiv2/zz_generated.api.go: dpapiv2/dp-api-server-v2.yaml dpapiv2/dp-api-server-v2-config.yaml | $(OAIGEN)
+	$(OAIGEN) --config dpapiv2/dp-api-server-v2-config.yaml dpapiv2/dp-api-server-v2.yaml > $@
 
 $(OAIGEN):
 	go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@v2.0.0
 	$(GOBIN)/oapi-codegen -version
 
 clean:
-	rm apiv2/zz_generated.api.go
+	rm apiv2/zz_generated.api.go dpapiv2/zz_generated.api.go
