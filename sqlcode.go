@@ -50,6 +50,9 @@ const (
 	SqlState3D016  SqlState = "3D016"
 	SqlState3D017  SqlState = "3D017"
 	SqlState3D018  SqlState = "3D018"
+	SqlState3D019  SqlState = "3D019"
+	SqlState3D020  SqlState = "3D020"
+	SqlState3D021  SqlState = "3D021"
 	SqlState3E001  SqlState = "3E001"
 	SqlState3E002  SqlState = "3E002"
 	SqlState3E003  SqlState = "3E003"
@@ -135,6 +138,9 @@ const (
 	SqlStateInvalidSecret              = SqlState3D016
 	SqlStateInvalidFunction            = SqlState3D017
 	SqlStateInvalidFunctionSource      = SqlState3D018
+	SqlStateInvalidQuery               = SqlState3D019
+	SqlStateInvalidRelation            = SqlState3D020
+	SqlStateMissingParameter           = SqlState3D021
 
 	// Class 3E — Resource not ready
 
