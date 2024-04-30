@@ -73,6 +73,7 @@ const (
 	SqlState42P14  SqlState = "42P014"
 	SqlState42P15  SqlState = "42P015"
 	SqlState42P16  SqlState = "42P016"
+	SqlState42P17  SqlState = "42P017"
 	SqlState42P001 SqlState = "42P001"
 	SqlState42P002 SqlState = "42P002"
 	SqlState57014  SqlState = "57014"
@@ -167,6 +168,7 @@ const (
 	SqlStateDuplicateSecret              = SqlState42P14
 	SqlStateDuplicateFunction            = SqlState42P15
 	SqlStateDuplicateFunctionSource      = SqlState42P16
+	SqlStateDuplicateRelation            = SqlState42P17
 	SqlStateAmbiguousOrganization        = SqlState42P001
 	SqlStateAmbiguousStore               = SqlState42P002
 
