@@ -52,7 +52,7 @@ type streamingRows struct {
 	metadata  *PrintTopicMetadataMessage
 	readyChan chan struct{}
 	dataChan  chan *PrintTopicDataMessage
-	connErr   error
+	errChan   chan error
 }
 
 type AuthMessage struct {
@@ -175,6 +175,7 @@ func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClien
 		conn:      conn,
 		dataChan:  make(chan *PrintTopicDataMessage, 30),
 		readyChan: make(chan struct{}),
+		errChan:   make(chan error),
 	}
 	go rows.readMessages()
 	<-rows.readyChan
@@ -187,12 +188,12 @@ func (r *streamingRows) readMessages() {
 	for {
 		var msg PrintTopicMessage
 		if err := r.conn.ReadJSON(&msg); err != nil {
-			r.connErr = &ErrInterfaceError{message: "unable to read message from server", wrapErr: err}
+			r.errChan <- &ErrInterfaceError{message: "unable to read message from server", wrapErr: err}
 			return
 		}
 		switch msg.Type {
 		case "error":
-			r.connErr = &ErrSQLError{SQLCode: msg.Err.SqlCode, Message: msg.Err.Message}
+			r.errChan <- &ErrSQLError{SQLCode: msg.Err.SqlCode, Message: msg.Err.Message}
 			close(r.readyChan)
 			return
 		case "metadata":
@@ -201,7 +202,7 @@ func (r *streamingRows) readMessages() {
 		case "data":
 			r.dataChan <- &msg.Data
 		default:
-			r.connErr = &ErrInterfaceError{message: "unexpected message type " + msg.Type}
+			r.errChan <- &ErrInterfaceError{message: "unexpected message type " + msg.Type}
 			close(r.readyChan)
 			return
 		}
@@ -301,19 +302,23 @@ func (r *streamingRows) ColumnTypeLength(index int) (length int64, ok bool) {
 
 // Next implements driver.Rows.
 func (r *streamingRows) Next(dest []driver.Value) error {
-	if r.connErr != nil {
-		return r.connErr
-	}
-	rowData, open := <-r.dataChan
-	if !open {
-		return io.EOF
+	var rowData *PrintTopicDataMessage
+	var open bool
+	var err error
+
+	select {
+	case rowData, open = <-r.dataChan:
+		if !open {
+			return io.EOF
+		}
+	case err = <-r.errChan:
+		return err
 	}
 
 	if len(rowData.Data) != len(dest) {
 		return &ErrClientError{message: fmt.Sprintf("number of columns does not match size of result slice. expected %d, got %d", len(rowData.Data), len(dest))}
 	}
 
-	var err error
 	for idx, col := range r.metadata.Columns {
 		switch {
 		case rowData.Data[idx] == nil:
