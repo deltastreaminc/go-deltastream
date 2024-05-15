@@ -178,12 +178,18 @@ func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClien
 		errChan:   make(chan error),
 	}
 	go rows.readMessages()
-	<-rows.readyChan
+	select {
+	case <-rows.readyChan:
+	case err = <-rows.errChan:
+		return nil, err
+	}
 
 	return rows, nil
 }
 
 func (r *streamingRows) readMessages() {
+	defer close(r.readyChan)
+
 	r.conn.SetReadDeadline(time.Time{})
 	for {
 		var msg PrintTopicMessage
@@ -194,16 +200,14 @@ func (r *streamingRows) readMessages() {
 		switch msg.Type {
 		case "error":
 			r.errChan <- &ErrSQLError{SQLCode: msg.Err.SqlCode, Message: msg.Err.Message}
-			close(r.readyChan)
 			return
 		case "metadata":
 			r.metadata = &msg.Metadata
-			close(r.readyChan)
+			r.readyChan <- struct{}{}
 		case "data":
 			r.dataChan <- &msg.Data
 		default:
 			r.errChan <- &ErrInterfaceError{message: "unexpected message type " + msg.Type}
-			close(r.readyChan)
 			return
 		}
 	}
