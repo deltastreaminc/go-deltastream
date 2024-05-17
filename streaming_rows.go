@@ -182,6 +182,7 @@ func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClien
 	go rows.readMessages()
 	select {
 	case <-rows.readyChan:
+	case <-ctx.Done():
 	case err = <-rows.errChan:
 		return nil, err
 	}
