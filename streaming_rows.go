@@ -49,6 +49,7 @@ var (
 type streamingRows struct {
 	conn *websocket.Conn
 
+	ctx       context.Context
 	metadata  *PrintTopicMetadataMessage
 	readyChan chan struct{}
 	dataChan  chan *PrintTopicDataMessage
@@ -172,6 +173,7 @@ func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClien
 	}
 
 	rows := &streamingRows{
+		ctx:       ctx,
 		conn:      conn,
 		dataChan:  make(chan *PrintTopicDataMessage, 30),
 		readyChan: make(chan struct{}),
@@ -180,6 +182,7 @@ func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClien
 	go rows.readMessages()
 	select {
 	case <-rows.readyChan:
+	case <-ctx.Done():
 	case err = <-rows.errChan:
 		return nil, err
 	}
@@ -311,6 +314,11 @@ func (r *streamingRows) Next(dest []driver.Value) error {
 	var err error
 
 	select {
+	case <-r.ctx.Done():
+		if err = r.conn.Close(); err != nil {
+			return &ErrInterfaceError{message: "error while closing connection", wrapErr: err}
+		}
+		return nil
 	case rowData, open = <-r.dataChan:
 		if !open {
 			return io.EOF
