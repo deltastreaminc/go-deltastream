@@ -186,10 +186,11 @@ func (r *resultSetRows) Next(dest []driver.Value) error {
 				return err
 			}
 		case col.Type == "BIGINT":
-			dest[idx], _, err = big.ParseFloat(*rowData[idx], 10, 0, big.ToNearestEven)
+			flt, _, err := big.ParseFloat(*rowData[idx], 10, 0, big.ToNearestEven)
 			if err != nil {
 				return err
 			}
+			dest[idx], _ = flt.Int(new(big.Int))
 		case col.Type == "FLOAT" || col.Type == "DOUBLE" || strings.HasPrefix(col.Type, "DECIMAL"):
 			dest[idx], err = strconv.ParseFloat(*rowData[idx], 64)
 			if err != nil {
