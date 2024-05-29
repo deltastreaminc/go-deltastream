@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -339,11 +340,17 @@ func (r *streamingRows) Next(dest []driver.Value) error {
 			fallthrough
 		case strings.HasPrefix(col.Type, "VARCHAR") || strings.HasPrefix(col.Type, "ARRAY") || strings.HasPrefix(col.Type, "MAP") || strings.HasPrefix(col.Type, "STRUCT"):
 			dest[idx] = *rowData.Data[idx]
-		case col.Type == "TINYINT" || col.Type == "SMALLINT" || col.Type == "INTEGER" || col.Type == "BIGINT":
+		case col.Type == "TINYINT" || col.Type == "SMALLINT" || col.Type == "INTEGER":
 			dest[idx], err = strconv.ParseInt(*rowData.Data[idx], 10, 64)
 			if err != nil {
 				return err
 			}
+		case col.Type == "BIGINT":
+			flt, _, err := big.ParseFloat(*rowData.Data[idx], 10, 0, big.ToNearestEven)
+			if err != nil {
+				return err
+			}
+			dest[idx], _ = flt.Int(new(big.Int))
 		case col.Type == "FLOAT" || col.Type == "DOUBLE" || strings.HasPrefix(col.Type, "DECIMAL"):
 			dest[idx], err = strconv.ParseFloat(*rowData.Data[idx], 64)
 			if err != nil {
