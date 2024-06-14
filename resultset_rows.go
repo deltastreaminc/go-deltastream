@@ -47,9 +47,9 @@ var typeMap map[string]reflect.Type
 func init() {
 	typeMap = map[string]reflect.Type{
 		"VARCHAR":       reflect.TypeOf(""),
-		"TINYINT":       reflect.TypeOf(int64(0)),
-		"SMALLINT":      reflect.TypeOf(int64(0)),
-		"INTEGER":       reflect.TypeOf(int64(0)),
+		"TINYINT":       reflect.TypeOf(int8(0)),
+		"SMALLINT":      reflect.TypeOf(int16(0)),
+		"INTEGER":       reflect.TypeOf(int32(0)),
 		"BIGINT":        reflect.TypeOf(int64(0)),
 		"FLOAT":         reflect.TypeOf(float64(0)),
 		"DOUBLE":        reflect.TypeOf(float64(0)),

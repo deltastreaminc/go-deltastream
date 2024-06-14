@@ -97,9 +97,9 @@ func TestDatatypes(t *testing.T) {
 
 	var (
 		varchar                string
-		tinyint                int64
-		smallint               int64
-		integer                int64
+		tinyint                int8
+		smallint               int16
+		integer                int32
 		bigint                 int64
 		floatv                 float64
 		doublev                float64
@@ -116,9 +116,9 @@ func TestDatatypes(t *testing.T) {
 		structv                string
 		boolean                bool
 		varchar_nullable       *string
-		tinyint_nullable       *int64
-		smallint_nullable      *int64
-		integer_nullable       *int64
+		tinyint_nullable       *int8
+		smallint_nullable      *int16
+		integer_nullable       *int32
 		bigint_nullable        *int64
 		float_nullable         *float64
 		double_nullable        *float64
