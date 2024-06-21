@@ -184,9 +184,16 @@ func (c *Conn) submitStatement(ctx context.Context, attachments map[string]io.Re
 		Database:  rsctx.DatabaseName,
 		Schema:    rsctx.SchemaName,
 		Store:     rsctx.StoreName,
+		Parameters: &struct {
+			SessionID *string "json:\"sessionID,omitempty\""
+			Timezone  *string "json:\"timezone,omitempty\""
+		}{},
 	}
 	if rsctx.OrganizationID != nil {
 		request.Organization = ptr.To(rsctx.OrganizationID.String())
+	}
+	if c.sessionID != nil {
+		request.Parameters.SessionID = c.sessionID
 	}
 
 	body := new(bytes.Buffer)
