@@ -297,6 +297,26 @@ components:
       name: "timezone"
       in: query
       allowEmptyValue: false
+    resourceType:
+      name: resourceType
+      in: path
+      schema:
+        type: string
+        enum: [function_source, descriptor_source]
+      required: true
+    resourceName:
+      name: resourceName
+      in: path
+      schema:
+        type: string
+      required: true
+    organizationID:
+      name: organizationID
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
   securitySchemes:
     apiToken:
       type: http
@@ -411,5 +431,76 @@ paths:
           $ref: '#/components/responses/ErrInternal'
         '503':
           $ref: '#/components/responses/ErrServiceUnavailable'
+  /billing-portal/{organizationID}:
+    get: 
+      description: Redirect to the billing portal
+      parameters:
+      - $ref: "#/components/parameters/organizationID"
+      responses:
+        '302':
+          description: Redirect to the billing portal
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri'
+        '400':
+          $ref: '#/components/responses/ErrBadRequest'
+        '403':
+          $ref: '#/components/responses/ErrForbidden'
+        '500':
+          $ref: '#/components/responses/ErrInternal'
+        '503':
+          $ref: '#/components/responses/ErrServiceUnavailable'
+  /payment-portal/{organizationID}:
+    get: 
+      description: Redirect to the payment portal
+      parameters:
+      - $ref: "#/components/parameters/organizationID"
+      responses:
+        '302':
+          description: Redirect to the payment portal
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri'
+        '400':
+          $ref: '#/components/responses/ErrBadRequest'
+        '403':
+          $ref: '#/components/responses/ErrForbidden'
+        '500':
+          $ref: '#/components/responses/ErrInternal'
+        '503':
+          $ref: '#/components/responses/ErrServiceUnavailable'
+  /download/{resourceType}/{organizationID}/{resourceName}:
+    get:
+      operationId: DownloadResource
+      description: Download a resource
+      parameters:
+      - $ref: "#/components/parameters/resourceType"
+      - $ref: "#/components/parameters/organizationID"
+      - $ref: "#/components/parameters/resourceName"
+      responses:
+        '200':
+          description: Download file
+          content:
+            'application/octet-stream':
+              schema:
+                type: string
+                format: bytes
+        '400':
+          $ref: '#/components/responses/ErrBadRequest'
+        '403':
+          $ref: '#/components/responses/ErrForbidden'
+        '404':
+          $ref: '#/components/responses/ErrNotFound'
+        '408':
+          $ref: '#/components/responses/ErrDeadlineExceeded'
+        '500':
+          $ref: '#/components/responses/ErrInternal'
+        '503':
+          $ref: '#/components/responses/ErrServiceUnavailable'
+
 security:
   - apiToken: []

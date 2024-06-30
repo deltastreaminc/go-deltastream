@@ -168,6 +168,8 @@ func ConnectorWithOptions(ctx context.Context, options ...ConnectionOption) (*co
 			opts.httpClient.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
+		} else {
+			return nil, &ErrClientError{message: "cannot use insecureTLS with custom httpClient.Transport"}
 		}
 	}
 

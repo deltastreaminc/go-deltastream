@@ -32,6 +32,18 @@ const (
 	Json ResultSetMetadataEncoding = "json"
 )
 
+// Defines values for ResourceType.
+const (
+	ResourceTypeDescriptorSource ResourceType = "descriptor_source"
+	ResourceTypeFunctionSource   ResourceType = "function_source"
+)
+
+// Defines values for DownloadResourceParamsResourceType.
+const (
+	DownloadResourceParamsResourceTypeDescriptorSource DownloadResourceParamsResourceType = "descriptor_source"
+	DownloadResourceParamsResourceTypeFunctionSource   DownloadResourceParamsResourceType = "function_source"
+)
+
 // DataplaneRequest defines model for DataplaneRequest.
 type DataplaneRequest struct {
 	RequestType DataplaneRequestRequestType `json:"requestType"`
@@ -142,8 +154,17 @@ type Version struct {
 	Patch int `json:"patch"`
 }
 
+// OrganizationID defines model for organizationID.
+type OrganizationID = openapi_types.UUID
+
 // PartitionID defines model for partitionID.
 type PartitionID = int32
+
+// ResourceName defines model for resourceName.
+type ResourceName = string
+
+// ResourceType defines model for resourceType.
+type ResourceType string
 
 // SessionID defines model for sessionID.
 type SessionID = string
@@ -171,6 +192,9 @@ type ErrNotFound = ErrorResponse
 
 // ErrServiceUnavailable defines model for ErrServiceUnavailable.
 type ErrServiceUnavailable = ErrorResponse
+
+// DownloadResourceParamsResourceType defines parameters for DownloadResource.
+type DownloadResourceParamsResourceType string
 
 // SubmitStatementMultipartBody defines parameters for SubmitStatement.
 type SubmitStatementMultipartBody struct {
@@ -264,6 +288,15 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetBillingPortalOrganizationID request
+	GetBillingPortalOrganizationID(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DownloadResource request
+	DownloadResource(ctx context.Context, resourceType DownloadResourceParamsResourceType, organizationID OrganizationID, resourceName ResourceName, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPaymentPortalOrganizationID request
+	GetPaymentPortalOrganizationID(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// SubmitStatementWithBody request with any body
 	SubmitStatementWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -274,6 +307,42 @@ type ClientInterface interface {
 
 	// GetVersion request
 	GetVersion(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) GetBillingPortalOrganizationID(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBillingPortalOrganizationIDRequest(c.Server, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DownloadResource(ctx context.Context, resourceType DownloadResourceParamsResourceType, organizationID OrganizationID, resourceName ResourceName, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDownloadResourceRequest(c.Server, resourceType, organizationID, resourceName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPaymentPortalOrganizationID(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPaymentPortalOrganizationIDRequest(c.Server, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) SubmitStatementWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -322,6 +391,122 @@ func (c *Client) GetVersion(ctx context.Context, reqEditors ...RequestEditorFn) 
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetBillingPortalOrganizationIDRequest generates requests for GetBillingPortalOrganizationID
+func NewGetBillingPortalOrganizationIDRequest(server string, organizationID OrganizationID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "organizationID", runtime.ParamLocationPath, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/billing-portal/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDownloadResourceRequest generates requests for DownloadResource
+func NewDownloadResourceRequest(server string, resourceType DownloadResourceParamsResourceType, organizationID OrganizationID, resourceName ResourceName) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "resourceType", runtime.ParamLocationPath, resourceType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "organizationID", runtime.ParamLocationPath, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "resourceName", runtime.ParamLocationPath, resourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/download/%s/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetPaymentPortalOrganizationIDRequest generates requests for GetPaymentPortalOrganizationID
+func NewGetPaymentPortalOrganizationIDRequest(server string, organizationID OrganizationID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "organizationID", runtime.ParamLocationPath, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/payment-portal/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewSubmitStatementRequest calls the generic SubmitStatement builder with application/json body
@@ -522,6 +707,15 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetBillingPortalOrganizationIDWithResponse request
+	GetBillingPortalOrganizationIDWithResponse(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*GetBillingPortalOrganizationIDResponse, error)
+
+	// DownloadResourceWithResponse request
+	DownloadResourceWithResponse(ctx context.Context, resourceType DownloadResourceParamsResourceType, organizationID OrganizationID, resourceName ResourceName, reqEditors ...RequestEditorFn) (*DownloadResourceResponse, error)
+
+	// GetPaymentPortalOrganizationIDWithResponse request
+	GetPaymentPortalOrganizationIDWithResponse(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*GetPaymentPortalOrganizationIDResponse, error)
+
 	// SubmitStatementWithBodyWithResponse request with any body
 	SubmitStatementWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SubmitStatementResponse, error)
 
@@ -532,6 +726,83 @@ type ClientWithResponsesInterface interface {
 
 	// GetVersionWithResponse request
 	GetVersionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetVersionResponse, error)
+}
+
+type GetBillingPortalOrganizationIDResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrBadRequest
+	JSON403      *ErrForbidden
+	JSON500      *ErrInternal
+	JSON503      *ErrServiceUnavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r GetBillingPortalOrganizationIDResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetBillingPortalOrganizationIDResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DownloadResourceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrBadRequest
+	JSON403      *ErrForbidden
+	JSON404      *ErrNotFound
+	JSON408      *ErrDeadlineExceeded
+	JSON500      *ErrInternal
+	JSON503      *ErrServiceUnavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r DownloadResourceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DownloadResourceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPaymentPortalOrganizationIDResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrBadRequest
+	JSON403      *ErrForbidden
+	JSON500      *ErrInternal
+	JSON503      *ErrServiceUnavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPaymentPortalOrganizationIDResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPaymentPortalOrganizationIDResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type SubmitStatementResponse struct {
@@ -617,6 +888,33 @@ func (r GetVersionResponse) StatusCode() int {
 	return 0
 }
 
+// GetBillingPortalOrganizationIDWithResponse request returning *GetBillingPortalOrganizationIDResponse
+func (c *ClientWithResponses) GetBillingPortalOrganizationIDWithResponse(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*GetBillingPortalOrganizationIDResponse, error) {
+	rsp, err := c.GetBillingPortalOrganizationID(ctx, organizationID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetBillingPortalOrganizationIDResponse(rsp)
+}
+
+// DownloadResourceWithResponse request returning *DownloadResourceResponse
+func (c *ClientWithResponses) DownloadResourceWithResponse(ctx context.Context, resourceType DownloadResourceParamsResourceType, organizationID OrganizationID, resourceName ResourceName, reqEditors ...RequestEditorFn) (*DownloadResourceResponse, error) {
+	rsp, err := c.DownloadResource(ctx, resourceType, organizationID, resourceName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDownloadResourceResponse(rsp)
+}
+
+// GetPaymentPortalOrganizationIDWithResponse request returning *GetPaymentPortalOrganizationIDResponse
+func (c *ClientWithResponses) GetPaymentPortalOrganizationIDWithResponse(ctx context.Context, organizationID OrganizationID, reqEditors ...RequestEditorFn) (*GetPaymentPortalOrganizationIDResponse, error) {
+	rsp, err := c.GetPaymentPortalOrganizationID(ctx, organizationID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPaymentPortalOrganizationIDResponse(rsp)
+}
+
 // SubmitStatementWithBodyWithResponse request with arbitrary body returning *SubmitStatementResponse
 func (c *ClientWithResponses) SubmitStatementWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SubmitStatementResponse, error) {
 	rsp, err := c.SubmitStatementWithBody(ctx, contentType, body, reqEditors...)
@@ -650,6 +948,161 @@ func (c *ClientWithResponses) GetVersionWithResponse(ctx context.Context, reqEdi
 		return nil, err
 	}
 	return ParseGetVersionResponse(rsp)
+}
+
+// ParseGetBillingPortalOrganizationIDResponse parses an HTTP response from a GetBillingPortalOrganizationIDWithResponse call
+func ParseGetBillingPortalOrganizationIDResponse(rsp *http.Response) (*GetBillingPortalOrganizationIDResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetBillingPortalOrganizationIDResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrInternal
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ErrServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDownloadResourceResponse parses an HTTP response from a DownloadResourceWithResponse call
+func ParseDownloadResourceResponse(rsp *http.Response) (*DownloadResourceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DownloadResourceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 408:
+		var dest ErrDeadlineExceeded
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON408 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrInternal
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ErrServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPaymentPortalOrganizationIDResponse parses an HTTP response from a GetPaymentPortalOrganizationIDWithResponse call
+func ParseGetPaymentPortalOrganizationIDResponse(rsp *http.Response) (*GetPaymentPortalOrganizationIDResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPaymentPortalOrganizationIDResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrInternal
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ErrServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseSubmitStatementResponse parses an HTTP response from a SubmitStatementWithResponse call

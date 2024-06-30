@@ -27,6 +27,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"os"
 	"sync"
 	"time"
 
@@ -84,6 +85,39 @@ func (c *Conn) Prepare(query string) (driver.Stmt, error) {
 }
 
 // endregion
+
+func (c *Conn) DownloadFile(ctx context.Context, resourceType apiv2.ResourceType, resourName, destFile string) error {
+	resp, err := c.client.DownloadResourceWithResponse(ctx, apiv2.DownloadResourceParamsResourceType(resourceType), *c.rsctx.OrganizationID, resourName)
+	if err != nil {
+		return &ErrInterfaceError{wrapErr: err, message: "unable to send request to server"}
+	}
+	switch {
+	case resp.StatusCode() == 200:
+		f, err := os.OpenFile(destFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		if err != nil {
+			return &ErrInterfaceError{wrapErr: err, message: "error opening file for writing"}
+		}
+		defer f.Close()
+		if _, err = f.Write(resp.Body); err != nil {
+			return &ErrInterfaceError{wrapErr: err, message: "error writing to file"}
+		}
+		return nil
+	case resp.JSON400 != nil:
+		return &ErrInterfaceError{message: resp.JSON400.Message}
+	case resp.JSON403 != nil:
+		return errors.Errorf(resp.JSON403.Message+": %w", ErrAuthenticationError)
+	case resp.JSON404 != nil:
+		return &ErrInterfaceError{message: resp.JSON404.Message}
+	case resp.JSON408 != nil:
+		return errors.Errorf(resp.JSON408.Message+": %w", ErrDeadlineExceeded)
+	case resp.JSON500 != nil:
+		return &ErrServerError{message: resp.JSON500.Message}
+	case resp.JSON503 != nil:
+		return errors.Errorf(resp.JSON500.Message+": %w", ErrServiceUnavailable)
+	default:
+		return &ErrInterfaceError{message: fmt.Sprintf("unexpected response from server. status code: %d", resp.HTTPResponse.StatusCode)}
+	}
+}
 
 func (c *Conn) Query(query string, args []driver.Value) (driver.Rows, error) {
 	return c.QueryContext(context.TODO(), query, convertArgs(args))
