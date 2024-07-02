@@ -9,7 +9,7 @@
             {"name": "id", "type": "VARCHAR", "nullable": false},
             {"name": "name", "type": "VARCHAR", "nullable": false},
             {"name": "description", "type": "VARCHAR", "nullable": true},
-            {"name": "profileImageURI", "type": "VARCHAR", "nullable": true},
+            {"name": "profileImageURI", "type": "VARCHAR", "nullable": true, "display_hint": "nowrap"},
             {"name": "createdAt", "type": "TIMESTAMP_TZ", "nullable": false}
         ],
         "context": {}

@@ -79,9 +79,10 @@ type ResultSet struct {
 
 // ResultSetColumns defines model for ResultSetColumns.
 type ResultSetColumns = []struct {
-	Name     string `json:"name"`
-	Nullable bool   `json:"nullable"`
-	Type     string `json:"type"`
+	DisplayHint *string `json:"display_hint,omitempty"`
+	Name        string  `json:"name"`
+	Nullable    bool    `json:"nullable"`
+	Type        string  `json:"type"`
 }
 
 // ResultSetContext defines model for ResultSetContext.
