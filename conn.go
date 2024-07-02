@@ -49,10 +49,11 @@ var (
 )
 
 type Conn struct {
-	client     *apiv2.ClientWithResponses
-	rsctx      *apiv2.ResultSetContext
-	httpClient *http.Client
-	sessionID  *string
+	client                   *apiv2.ClientWithResponses
+	rsctx                    *apiv2.ResultSetContext
+	httpClient               *http.Client
+	sessionID                *string
+	enableColumnDisplayHints bool
 	sync.RWMutex
 }
 
@@ -174,12 +175,12 @@ func (c *Conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 			if err != nil {
 				return nil, err
 			}
-			return &resultSetRows{ctx: ctx, conn: dpconn, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs}, nil
+			return &resultSetRows{ctx: ctx, conn: dpconn, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs, enableColumnDisplayHints: c.enableColumnDisplayHints}, nil
 		}
 		return newStreamingRows(ctx, *rs.Metadata.DataplaneRequest, c.httpClient, c.sessionID)
 	}
 
-	return &resultSetRows{ctx: ctx, conn: c, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs}, nil
+	return &resultSetRows{ctx: ctx, conn: c, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs, enableColumnDisplayHints: c.enableColumnDisplayHints}, nil
 }
 
 func (c *Conn) Ping(ctx context.Context) error {
