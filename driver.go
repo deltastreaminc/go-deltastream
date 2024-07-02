@@ -97,12 +97,13 @@ func Open(connStr string) (driver.Conn, error) {
 }
 
 type connectionOptions struct {
-	staticToken *string
-	sessionID   *string
-	server      string
-	insecureTLS bool
-	httpClient  *http.Client
-	authClient  AuthClient
+	staticToken              *string
+	sessionID                *string
+	server                   string
+	insecureTLS              bool
+	httpClient               *http.Client
+	authClient               AuthClient
+	enableColumnDisplayHints bool
 }
 
 func WithStaticToken(token string) func(*connectionOptions) {
@@ -138,6 +139,12 @@ func WithSessionID(sessionID string) func(*connectionOptions) {
 func WithServer(server string) func(*connectionOptions) {
 	return func(o *connectionOptions) {
 		o.server = server
+	}
+}
+
+func WithColumnDisplayHints() func(*connectionOptions) {
+	return func(o *connectionOptions) {
+		o.enableColumnDisplayHints = true
 	}
 }
 
@@ -204,10 +211,11 @@ func ConnectorWithOptions(ctx context.Context, options ...ConnectionOption) (*co
 // Connect returns a connection to the database. The returned connection must only used by one goroutine at a time.
 func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	return &Conn{
-		client:     c.client,
-		rsctx:      &apiv2.ResultSetContext{},
-		sessionID:  c.opts.sessionID,
-		httpClient: c.opts.httpClient,
+		client:                   c.client,
+		rsctx:                    &apiv2.ResultSetContext{},
+		sessionID:                c.opts.sessionID,
+		httpClient:               c.opts.httpClient,
+		enableColumnDisplayHints: c.opts.enableColumnDisplayHints,
 	}, nil
 }
 

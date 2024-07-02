@@ -30,6 +30,7 @@ import (
 
 	"github.com/deltastreaminc/go-deltastream/apiv2"
 	"github.com/google/uuid"
+	"k8s.io/utils/ptr"
 )
 
 // Compile time validation that our types implement the expected interfaces
@@ -79,7 +80,8 @@ type resultSetRows struct {
 	currentRowIdx       int32
 	currentPartitionIdx int32
 
-	currentResultSet *apiv2.ResultSet
+	currentResultSet         *apiv2.ResultSet
+	enableColumnDisplayHints bool
 }
 
 func (r *resultSetRows) ColumnTypeNullable(index int) (nullable bool, ok bool) {
@@ -95,7 +97,12 @@ func (r *resultSetRows) ColumnTypeDatabaseTypeName(index int) string {
 		return ""
 	}
 	md := r.currentResultSet.Metadata.Columns[index]
-	return md.Type
+	dbType := md.Type
+	if r.enableColumnDisplayHints && md.DisplayHint != nil {
+		dbType = dbType + ";" + ptr.Deref(md.DisplayHint, "")
+	}
+
+	return dbType
 }
 
 // ColumnTypeScanType implements driver.RowsColumnTypeScanType.

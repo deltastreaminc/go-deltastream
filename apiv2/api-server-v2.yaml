@@ -154,6 +154,8 @@ components:
             type: string
           nullable:
             type: boolean
+          display_hint:
+            type: string
         required:
           - name
           - type
