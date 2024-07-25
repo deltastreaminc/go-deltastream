@@ -73,6 +73,10 @@ func (c *Conn) GetContext() apiv2.ResultSetContext {
 	return *c.rsctx
 }
 
+func (c *Conn) SetContext(rsctx apiv2.ResultSetContext) {
+	c.rsctx = &rsctx
+}
+
 // Prepare implements driver.Conn.
 func (c *Conn) Prepare(query string) (driver.Stmt, error) {
 	if c.client == nil {
