@@ -50,11 +50,12 @@ var (
 type streamingRows struct {
 	conn *websocket.Conn
 
-	ctx       context.Context
-	metadata  *PrintTopicMetadataMessage
-	readyChan chan struct{}
-	dataChan  chan *PrintTopicDataMessage
-	errChan   chan error
+	ctx                      context.Context
+	metadata                 *PrintTopicMetadataMessage
+	readyChan                chan struct{}
+	dataChan                 chan *PrintTopicDataMessage
+	errChan                  chan error
+	enableColumnDisplayHints bool
 }
 
 type AuthMessage struct {
@@ -125,7 +126,7 @@ type PrintTopicDataMessage struct {
 	Data    []*string         `json:"data"`
 }
 
-func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClient *http.Client, sessionID *string) (*streamingRows, error) {
+func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClient *http.Client, sessionID *string, enableDislayHints bool) (*streamingRows, error) {
 	u, err := url.Parse(req.Uri)
 	if err != nil {
 		return nil, err
@@ -174,11 +175,12 @@ func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClien
 	}
 
 	rows := &streamingRows{
-		ctx:       ctx,
-		conn:      conn,
-		dataChan:  make(chan *PrintTopicDataMessage, 30),
-		readyChan: make(chan struct{}),
-		errChan:   make(chan error),
+		ctx:                      ctx,
+		conn:                     conn,
+		dataChan:                 make(chan *PrintTopicDataMessage, 30),
+		readyChan:                make(chan struct{}),
+		errChan:                  make(chan error),
+		enableColumnDisplayHints: enableDislayHints,
 	}
 	go rows.readMessages()
 	select {
@@ -234,7 +236,13 @@ func (r *streamingRows) ColumnTypeDatabaseTypeName(index int) string {
 	if index < 0 || index >= len(r.metadata.Columns) {
 		return ""
 	}
-	return r.metadata.Columns[index].Name
+	t := r.metadata.Columns[index].Type
+	if r.enableColumnDisplayHints {
+		spl := strings.SplitN(t, ";", 2)
+		hints := append([]string{"streaming=true"}, spl[1:]...)
+		return fmt.Sprintf("%s;%s", spl[0], strings.Join(hints, ","))
+	}
+	return t
 }
 
 func (r *streamingRows) ColumnTypeScanType(index int) reflect.Type {
