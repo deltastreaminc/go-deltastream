@@ -46,6 +46,7 @@ const (
 
 // DataplaneRequest defines model for DataplaneRequest.
 type DataplaneRequest struct {
+	QueryID     *string                     `json:"queryID,omitempty"`
 	RequestType DataplaneRequestRequestType `json:"requestType"`
 	StatementID string                      `json:"statementID"`
 	Token       string                      `json:"token"`
