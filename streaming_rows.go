@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"github.com/deltastreaminc/go-deltastream/apiv2"
+
 	"github.com/gorilla/websocket"
 	"k8s.io/utils/ptr"
 )
@@ -56,6 +57,8 @@ type streamingRows struct {
 	dataChan                 chan *PrintTopicDataMessage
 	errChan                  chan error
 	enableColumnDisplayHints bool
+	queryID                  *string
+	dsConn                   *Conn
 }
 
 type AuthMessage struct {
@@ -126,7 +129,7 @@ type PrintTopicDataMessage struct {
 	Data    []*string         `json:"data"`
 }
 
-func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClient *http.Client, sessionID *string, enableDislayHints bool) (*streamingRows, error) {
+func newStreamingRows(ctx context.Context, c *Conn, req apiv2.DataplaneRequest, httpClient *http.Client, sessionID *string, enableDislayHints bool) (*streamingRows, error) {
 	u, err := url.Parse(req.Uri)
 	if err != nil {
 		return nil, err
@@ -181,6 +184,8 @@ func newStreamingRows(ctx context.Context, req apiv2.DataplaneRequest, httpClien
 		readyChan:                make(chan struct{}),
 		errChan:                  make(chan error),
 		enableColumnDisplayHints: enableDislayHints,
+		queryID:                  req.QueryID,
+		dsConn:                   c,
 	}
 	go rows.readMessages()
 	select {
@@ -205,7 +210,34 @@ func (r *streamingRows) readMessages() {
 		}
 		switch msg.Type {
 		case "error":
-			r.errChan <- &ErrSQLError{SQLCode: msg.Err.SqlCode, Message: msg.Err.Message}
+			message := msg.Err.Message
+			if r.queryID != nil {
+				describe, err := r.dsConn.submitStatement(r.ctx, nil, fmt.Sprintf("DESCRIBE QUERY HISTORY %s;", *r.queryID))
+				if err != nil {
+					_ = err
+				} else {
+					errd := false
+					var msg string
+					if describe.Data == nil {
+						continue
+					}
+					d := *describe.Data
+					for i, col := range describe.Metadata.Columns {
+						if strings.ToLower(col.Name) == "state" && strings.ToLower(*d[0][i]) == "errored" {
+							errd = true
+							continue
+						}
+						if strings.ToLower(col.Name) == "messages" {
+							msg = fmt.Sprintf("%s\n\n%s", *d[0][i], message)
+							continue
+						}
+					}
+					if errd {
+						message = msg
+					}
+				}
+			}
+			r.errChan <- &ErrSQLError{SQLCode: msg.Err.SqlCode, Message: message}
 			return
 		case "metadata":
 			r.metadata = &msg.Metadata

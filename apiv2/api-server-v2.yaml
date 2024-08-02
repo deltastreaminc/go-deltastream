@@ -169,6 +169,8 @@ components:
           type: string
         statementID:
           type: string
+        queryID:
+          type: string
         requestType:
           type: string
           enum:

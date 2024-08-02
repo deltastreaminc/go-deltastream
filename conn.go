@@ -181,7 +181,7 @@ func (c *Conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 			}
 			return &resultSetRows{ctx: ctx, conn: dpconn, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs, enableColumnDisplayHints: c.enableColumnDisplayHints}, nil
 		}
-		return newStreamingRows(ctx, *rs.Metadata.DataplaneRequest, c.httpClient, c.sessionID, c.enableColumnDisplayHints)
+		return newStreamingRows(ctx, c, *rs.Metadata.DataplaneRequest, c.httpClient, c.sessionID, c.enableColumnDisplayHints)
 	}
 
 	return &resultSetRows{ctx: ctx, conn: c, currentRowIdx: -1, currentPartitionIdx: 0, currentResultSet: rs, enableColumnDisplayHints: c.enableColumnDisplayHints}, nil
