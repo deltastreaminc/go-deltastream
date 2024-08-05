@@ -222,14 +222,19 @@ func (r *streamingRows) readMessages() {
 						continue
 					}
 					d := *describe.Data
-					for i, col := range describe.Metadata.Columns {
-						if strings.ToLower(col.Name) == "state" && strings.ToLower(*d[0][i]) == "errored" {
-							errd = true
-							continue
-						}
-						if strings.ToLower(col.Name) == "messages" {
-							msg = fmt.Sprintf("%s\n\n%s", *d[0][i], message)
-							continue
+					if len(d) > 0 {
+						for i, col := range describe.Metadata.Columns {
+							if i > len(d[0]) {
+								continue
+							}
+							if strings.ToLower(col.Name) == "state" && strings.ToLower(*d[0][i]) == "errored" {
+								errd = true
+								continue
+							}
+							if strings.ToLower(col.Name) == "messages" {
+								msg = fmt.Sprintf("%s\n\n%s", *d[0][i], message)
+								continue
+							}
 						}
 					}
 					if errd {
