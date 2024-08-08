@@ -25,12 +25,11 @@ import (
 	"time"
 
 	"github.com/jarcoal/httpmock"
-	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 )
 
 func TestDatatypes(t *testing.T) {
-	g := gomega.NewWithT(t)
+	g := NewWithT(t)
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
@@ -106,7 +105,7 @@ func TestDatatypes(t *testing.T) {
 		decimal                float64
 		timestamp              time.Time
 		timestamp_tz           time.Time
-		date                   time.Time
+		date                   string
 		timev                  time.Time
 		timestamp_ltz          time.Time
 		varbinary              []byte
@@ -125,7 +124,7 @@ func TestDatatypes(t *testing.T) {
 		decimal_nullable       *float64
 		timestamp_nullable     *time.Time
 		timestamp_tz_nullable  *time.Time
-		date_nullable          *time.Time
+		date_nullable          *string
 		time_nullable          *time.Time
 		timestamp_ltz_nullable *time.Time
 		varbinary_nullable     *[]byte
