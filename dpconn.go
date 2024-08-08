@@ -21,6 +21,7 @@ import (
 	"database/sql"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/deltastreaminc/go-deltastream/apiv2"
@@ -47,6 +48,10 @@ func NewDPConn(dpreq apiv2.DataplaneRequest, sessionID *string, httpClient *http
 		uri.String(),
 		dpapiv2.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
 			req.Header.Add("Authorization", "Bearer "+dpreq.Token)
+			if os.Getenv("DELTASTREAM_MAINTENANCE") != "" {
+				// Allows requests to be made during maintenance. This is only used for test
+				req.Header.Add("deltastream-maintenance", "yes")
+			}
 			return nil
 		}),
 		dpapiv2.WithHTTPClient(httpClient),

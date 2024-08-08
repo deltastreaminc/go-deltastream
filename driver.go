@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 
 	"k8s.io/utils/ptr"
 
@@ -194,6 +195,10 @@ func ConnectorWithOptions(ctx context.Context, options ...ConnectionOption) (*co
 				return err
 			}
 			req.Header.Add("Authorization", "Bearer "+token)
+			if os.Getenv("DELTASTREAM_MAINTENANCE") != "" {
+				// Allows requests to be made during maintenance. This is only used for test
+				req.Header.Add("deltastream-maintenance", "yes")
+			}
 			return nil
 		}),
 		apiv2.WithHTTPClient(opts.httpClient),
