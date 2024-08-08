@@ -290,7 +290,7 @@ func (c *Conn) submitStatement(ctx context.Context, attachments map[string]io.Re
 	case resp.JSON500 != nil:
 		return nil, &ErrServerError{message: resp.JSON500.Message}
 	case resp.JSON503 != nil:
-		return nil, errors.Errorf(resp.JSON500.Message+": %w", ErrServiceUnavailable)
+		return nil, errors.Errorf(resp.JSON503.Message+": %w", ErrServiceUnavailable)
 	default:
 		return nil, &ErrInterfaceError{message: fmt.Sprintf("unexpected response from server. status code: %d", resp.HTTPResponse.StatusCode)}
 	}
