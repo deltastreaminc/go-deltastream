@@ -56,7 +56,6 @@ func init() {
 		"DOUBLE":        reflect.TypeOf(float64(0)),
 		"DECIMAL":       reflect.TypeOf(float64(0)),
 		"TIMESTAMP":     reflect.TypeOf(time.Now()),
-		"TIMESTAMP_TZ":  reflect.TypeOf(time.Now()),
 		"DATE":          reflect.TypeOf(time.Now()),
 		"TIME":          reflect.TypeOf(time.Now()),
 		"TIMESTAMP_LTZ": reflect.TypeOf(time.Now()),
@@ -249,10 +248,13 @@ func parseTime(s, colType string) (time.Time, error) {
 	}
 
 	switch {
-	case strings.HasPrefix(colType, `TIMESTAMP`):
+	case
+		strings.HasSuffix(colType, `WITH LOCAL TIME ZONE`),
+		strings.HasPrefix(colType, `TIMESTAMP_LTZ`):
+
 		sspl := strings.Split(s, " ")
 		if len(sspl) != 2 {
-			return time.Now(), fmt.Errorf("invalid timestamp")
+			return time.Now(), fmt.Errorf("invalid timestamp_ltz %s", s)
 		}
 		timePart := sspl[1]
 		containsNano := strings.Contains(timePart, ".")
@@ -266,18 +268,38 @@ func parseTime(s, colType string) (time.Time, error) {
 			layout += "Z0700"
 		}
 		return time.Parse(layout, s)
-	case colType == `TIME` || strings.HasPrefix(colType, "TIME("):
+	case
+		colType == `TIMESTAMP`,
+		strings.HasPrefix(colType, `TIMESTAMP(`):
+
+		sspl := strings.Split(s, " ")
+		if len(sspl) != 2 {
+			return time.Now(), fmt.Errorf("invalid timestamp %s", s)
+		}
+		timePart := sspl[1]
+		containsNano := strings.Contains(timePart, ".")
+		if strings.Contains(timePart, "Z") || strings.Contains(timePart, "+") || strings.Contains(timePart, "-") {
+			return time.Now(), fmt.Errorf("timestamp cannot be parsed with timezone. timestamp_ltz must be used instead")
+		}
+		layout := "2006-01-02 15:04:05"
+		if containsNano {
+			layout += ".999999999"
+		}
+		return time.Parse(layout, s)
+	case
+		colType == `TIME`,
+		strings.HasPrefix(colType, "TIME("):
+
 		containsNano := strings.Contains(s, ".")
-		containsTZ := strings.Contains(s, "Z") || strings.Contains(s, "+") || strings.Contains(s, "-")
+		if strings.Contains(s, "Z") || strings.Contains(s, "+") || strings.Contains(s, "-") {
+			return time.Now(), fmt.Errorf("time cannot be parsed with timezone")
+		}
 		layout := "15:04:05"
 		if containsNano {
 			layout += ".999999999"
 		}
-		if containsTZ {
-			layout += "Z0700"
-		}
 		return time.Parse(layout, s)
 	default:
-		return time.Now(), fmt.Errorf("unsupported column type")
+		return time.Now(), fmt.Errorf("unsupported column type %s", colType)
 	}
 }
