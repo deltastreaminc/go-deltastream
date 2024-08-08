@@ -185,9 +185,17 @@ func (r *resultSetRows) Next(dest []driver.Value) error {
 			dest[idx] = nil
 		default:
 			fallthrough
-		case strings.HasPrefix(col.Type, "VARCHAR") || strings.HasPrefix(col.Type, "ARRAY") || strings.HasPrefix(col.Type, "MAP") || strings.HasPrefix(col.Type, "STRUCT"):
+		case // as parsed by the server
+			strings.HasPrefix(col.Type, "VARCHAR"),
+			col.Type == "DATE",
+			strings.HasPrefix(col.Type, "ARRAY"),
+			strings.HasPrefix(col.Type, "MAP"),
+			strings.HasPrefix(col.Type, "STRUCT"):
 			dest[idx] = *rowData[idx]
-		case col.Type == "TINYINT" || col.Type == "SMALLINT" || col.Type == "INTEGER":
+		case
+			col.Type == "TINYINT",
+			col.Type == "SMALLINT",
+			col.Type == "INTEGER":
 			dest[idx], err = strconv.ParseInt(*rowData[idx], 10, 64)
 			if err != nil {
 				return err
@@ -198,17 +206,22 @@ func (r *resultSetRows) Next(dest []driver.Value) error {
 				return err
 			}
 			dest[idx], _ = flt.Int(new(big.Int))
-		case col.Type == "FLOAT" || col.Type == "DOUBLE" || strings.HasPrefix(col.Type, "DECIMAL"):
+		case
+			col.Type == "FLOAT",
+			col.Type == "DOUBLE",
+			strings.HasPrefix(col.Type, "DECIMAL"):
 			dest[idx], err = strconv.ParseFloat(*rowData[idx], 64)
 			if err != nil {
 				return err
 			}
-		case strings.HasPrefix(col.Type, "TIME") || col.Type == "DATE":
+		case strings.HasPrefix(col.Type, "TIME"):
 			dest[idx], err = parseTime(*rowData[idx], col.Type)
 			if err != nil {
 				return err
 			}
-		case col.Type == "VARBINARY" || col.Type == "BYTES":
+		case
+			col.Type == "VARBINARY",
+			col.Type == "BYTES":
 			dest[idx], err = base64.StdEncoding.DecodeString(*rowData[idx])
 			if err != nil {
 				return err
