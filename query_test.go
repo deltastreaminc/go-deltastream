@@ -162,7 +162,7 @@ func TestSimpleResultset(t *testing.T) {
 		&ColumnMatcher{Name: "name", DatabaseType: "VARCHAR"},
 		&ColumnMatcher{Name: "description", DatabaseType: "VARCHAR"},
 		&ColumnMatcher{Name: "profileImageURI", DatabaseType: "VARCHAR"},
-		&ColumnMatcher{Name: "createdAt", DatabaseType: "TIMESTAMP_TZ"},
+		&ColumnMatcher{Name: "createdAt", DatabaseType: "TIMESTAMP_LTZ"},
 	))
 
 	var (
@@ -213,7 +213,7 @@ func TestSimpleResultsetWithDisplayHints(t *testing.T) {
 		&ColumnMatcher{Name: "name", DatabaseType: "VARCHAR"},
 		&ColumnMatcher{Name: "description", DatabaseType: "VARCHAR"},
 		&ColumnMatcher{Name: "profileImageURI", DatabaseType: "VARCHAR;nowrap"},
-		&ColumnMatcher{Name: "createdAt", DatabaseType: "TIMESTAMP_TZ"},
+		&ColumnMatcher{Name: "createdAt", DatabaseType: "TIMESTAMP_LTZ"},
 	))
 }
 

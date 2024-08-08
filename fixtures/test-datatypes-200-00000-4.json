@@ -15,7 +15,6 @@
             {"name": "DOUBLE", "type": "DOUBLE", "nullable": false},
             {"name": "DECIMAL", "type": "DECIMAL(4, 3)", "nullable": false},
             {"name": "TIMESTAMP", "type": "TIMESTAMP(3)", "nullable": false},
-            {"name": "TIMESTAMP_TZ", "type": "TIMESTAMP_TZ", "nullable": false},
             {"name": "DATE", "type": "DATE", "nullable": false},
             {"name": "TIME", "type": "TIME", "nullable": false},
             {"name": "TIMESTAMP_LTZ", "type": "TIMESTAMP_LTZ", "nullable": false},
@@ -34,7 +33,6 @@
             {"name": "DOUBLE_NULLABLE", "type": "DOUBLE", "nullable": true},
             {"name": "DECIMAL_NULLABLE", "type": "DECIMAL(4, 3)", "nullable": true},
             {"name": "TIMESTAMP_NULLABLE", "type": "TIMESTAMP(3)", "nullable": true},
-            {"name": "TIMESTAMP_TZ_NULLABLE", "type": "TIMESTAMP_TZ", "nullable": true},
             {"name": "DATE_NULLABLE", "type": "DATE", "nullable": true},
             {"name": "TIME_NULLABLE", "type": "TIME", "nullable": true},
             {"name": "TIMESTAMP_LTZ_NULLABLE", "type": "TIMESTAMP_LTZ", "nullable": true},
@@ -48,9 +46,9 @@
         "context": {}
     },
     "data": [
-        ["VARCHAR", "127", "32767", "2147483647", "9223372036854775807", "-1.79E+308", "-1.79E+308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "2007-04-30", "13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "true", "VARCHAR", "127", "32767", "2147483647", "9223372036854775807", "-1.79E+308", "-1.79E+308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "2007-04-30", "13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "true"],
-        ["VARCHAR", "0", "-32768", "-2147483648", "-9223372036854775808", "-2.23E-308", "-2.23E-308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30 13:10:02.0474381+0800", "2007-04-30", "13:10:02.0474381Z", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "false", null, null, null, null,null, null, null, null, null,null, null, null, null, null, null, null, null, null, null],
-        ["VARCHAR", "0", "-32768", "-2147483648", "-9223372036854775808", "2.23E-308", "2.23E-308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30 13:10:02.0474381-0700", "2007-04-30", "13:10:02.0474381Z", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "false", null, null, null, null,null, null, null, null, null,null, null, null, null, null, null, null, null, null, null],
-        ["VARCHAR", "0", "-32768", "-2147483648", "-9223372036854775808", "1.79E+308", "1.79E+308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "2007-04-30", "13:10:02.0474381Z", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "false", null, null, null, null,null, null, null, null, null,null, null, null, null, null, null, null, null, null, null]
+        ["VARCHAR", "127", "32767", "2147483647", "9223372036854775807", "-1.79E+308", "-1.79E+308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30", "13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "true", "VARCHAR", "127", "32767", "2147483647", "9223372036854775807", "-1.79E+308", "-1.79E+308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30", "13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "true"],
+        ["VARCHAR", "0", "-32768", "-2147483648", "-9223372036854775808", "-2.23E-308", "-2.23E-308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30", "13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "false", null, null, null, null,null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+        ["VARCHAR", "0", "-32768", "-2147483648", "-9223372036854775808", "2.23E-308", "2.23E-308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30", "13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "false", null, null, null, null,null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+        ["VARCHAR", "0", "-32768", "-2147483648", "-9223372036854775808", "1.79E+308", "1.79E+308", "123.00", "2007-04-30 13:10:02.0474381", "2007-04-30", "13:10:02.0474381", "2007-04-30 13:10:02.0474381Z", "YmluYXJ5", "YmluYXJ5", "[1,2,3,4]", "{\"k\": \"v\"}", "{\"k\": \"v\"}", "false", null, null, null, null,null, null, null, null, null, null, null, null, null, null, null, null, null, null]
     ]
 }

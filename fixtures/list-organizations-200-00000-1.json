@@ -10,7 +10,7 @@
             {"name": "name", "type": "VARCHAR", "nullable": false},
             {"name": "description", "type": "VARCHAR", "nullable": true},
             {"name": "profileImageURI", "type": "VARCHAR", "nullable": true, "display_hint": "nowrap"},
-            {"name": "createdAt", "type": "TIMESTAMP_TZ", "nullable": false}
+            {"name": "createdAt", "type": "TIMESTAMP_LTZ", "nullable": false}
         ],
         "context": {}
     },
