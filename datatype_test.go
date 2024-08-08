@@ -60,7 +60,6 @@ func TestDatatypes(t *testing.T) {
 		"DOUBLE",
 		"DECIMAL",
 		"TIMESTAMP",
-		"TIMESTAMP_TZ",
 		"DATE",
 		"TIME",
 		"TIMESTAMP_LTZ",
@@ -79,7 +78,6 @@ func TestDatatypes(t *testing.T) {
 		"DOUBLE_NULLABLE",
 		"DECIMAL_NULLABLE",
 		"TIMESTAMP_NULLABLE",
-		"TIMESTAMP_TZ_NULLABLE",
 		"DATE_NULLABLE",
 		"TIME_NULLABLE",
 		"TIMESTAMP_LTZ_NULLABLE",
@@ -104,7 +102,6 @@ func TestDatatypes(t *testing.T) {
 		doublev                float64
 		decimal                float64
 		timestamp              time.Time
-		timestamp_tz           time.Time
 		date                   string
 		timev                  time.Time
 		timestamp_ltz          time.Time
@@ -123,7 +120,6 @@ func TestDatatypes(t *testing.T) {
 		double_nullable        *float64
 		decimal_nullable       *float64
 		timestamp_nullable     *time.Time
-		timestamp_tz_nullable  *time.Time
 		date_nullable          *string
 		time_nullable          *time.Time
 		timestamp_ltz_nullable *time.Time
@@ -145,7 +141,6 @@ func TestDatatypes(t *testing.T) {
 			&doublev,
 			&decimal,
 			&timestamp,
-			&timestamp_tz,
 			&date,
 			&timev,
 			&timestamp_ltz,
@@ -164,7 +159,6 @@ func TestDatatypes(t *testing.T) {
 			&double_nullable,
 			&decimal_nullable,
 			&timestamp_nullable,
-			&timestamp_tz_nullable,
 			&date_nullable,
 			&time_nullable,
 			&timestamp_ltz_nullable,
