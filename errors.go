@@ -85,5 +85,9 @@ type ErrSQLError struct {
 }
 
 func (e ErrSQLError) Error() string {
-	return fmt.Sprintf("sql error: %s", e.Message)
+	var sid string
+	if e.StatementID != uuid.Nil {
+		sid = fmt.Sprintf(" RequestID: %s", e.StatementID.String())
+	}
+	return fmt.Sprintf("sql error: %s%s", e.Message, sid)
 }
