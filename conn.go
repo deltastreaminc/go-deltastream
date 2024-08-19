@@ -321,7 +321,7 @@ func (c *Conn) getStatement(ctx context.Context, statementID uuid.UUID, partitio
 				StatementID: resp.JSON200.StatementID,
 			}
 		case resp.JSON202 != nil:
-			continue
+			// drop out of switch to sleep and retry
 		case resp.JSON400 != nil:
 			return nil, &ErrInterfaceError{message: resp.JSON400.Message}
 		case resp.JSON403 != nil:
@@ -333,7 +333,7 @@ func (c *Conn) getStatement(ctx context.Context, statementID uuid.UUID, partitio
 		case resp.JSON500 != nil:
 			return nil, &ErrServerError{message: resp.JSON500.Message}
 		case resp.JSON503 != nil:
-			return nil, errors.Errorf(resp.JSON500.Message+": %w", ErrServiceUnavailable)
+			return nil, errors.Errorf(resp.JSON503.Message+": %w", ErrServiceUnavailable)
 		}
 
 		select {
