@@ -85,5 +85,5 @@ type ErrSQLError struct {
 }
 
 func (e ErrSQLError) Error() string {
-	return fmt.Sprintf("sql error: %s", e.Message)
+	return fmt.Sprintf("sql error: %s (SQLState: %s)", e.Message, e.SQLCode)
 }
