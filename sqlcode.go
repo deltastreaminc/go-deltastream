@@ -53,6 +53,8 @@ const (
 	SqlState3D019  SqlState = "3D019"
 	SqlState3D020  SqlState = "3D020"
 	SqlState3D021  SqlState = "3D021"
+	SqlState3D022  SqlState = "3D022"
+	SqlState3D023  SqlState = "3D023"
 	SqlState3E001  SqlState = "3E001"
 	SqlState3E002  SqlState = "3E002"
 	SqlState3E003  SqlState = "3E003"
@@ -143,6 +145,8 @@ const (
 	SqlStateInvalidQuery               = SqlState3D019
 	SqlStateInvalidRelation            = SqlState3D020
 	SqlStateMissingParameter           = SqlState3D021
+	SqlStateInvalidPrivateLink         = SqlState3D022
+	SqlStateInvalidComputePool         = SqlState3D023
 
 	// Class 3E — Resource not ready
 
