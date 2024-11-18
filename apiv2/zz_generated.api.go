@@ -88,11 +88,12 @@ type ResultSetColumns = []struct {
 
 // ResultSetContext defines model for ResultSetContext.
 type ResultSetContext struct {
-	DatabaseName   *string             `json:"databaseName,omitempty"`
-	OrganizationID *openapi_types.UUID `json:"organizationID,omitempty"`
-	RoleName       *string             `json:"roleName,omitempty"`
-	SchemaName     *string             `json:"schemaName,omitempty"`
-	StoreName      *string             `json:"storeName,omitempty"`
+	ComputePoolName *string             `json:"computePoolName,omitempty"`
+	DatabaseName    *string             `json:"databaseName,omitempty"`
+	OrganizationID  *openapi_types.UUID `json:"organizationID,omitempty"`
+	RoleName        *string             `json:"roleName,omitempty"`
+	SchemaName      *string             `json:"schemaName,omitempty"`
+	StoreName       *string             `json:"storeName,omitempty"`
 }
 
 // ResultSetMetadata defines model for ResultSetMetadata.
@@ -114,6 +115,9 @@ type ResultSetPartitionInfo struct {
 
 // StatementRequest defines model for StatementRequest.
 type StatementRequest struct {
+	// ComputePool Compute_pool to use when executing a statement. This value is case sensitive
+	ComputePool *string `json:"computePool,omitempty"`
+
 	// Database Database to add to search path for name resolution. This value is case sensitive
 	Database *string `json:"database,omitempty"`
 
@@ -133,7 +137,7 @@ type StatementRequest struct {
 	// Statement DeltaStream SQL statement or batch of SQL statements to execute
 	Statement string `json:"statement"`
 
-	// Store Store to add to search path for name resolution. This value is case sensitive
+	// Store Store to use when executing a statement. This value is case sensitive
 	Store *string `json:"store,omitempty"`
 }
 

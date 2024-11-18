@@ -218,11 +218,12 @@ func (c *Conn) submitStatement(ctx context.Context, attachments map[string]io.Re
 	rsctx := c.getResultSetContext()
 
 	request := &apiv2.SubmitStatementJSONRequestBody{
-		Statement: query,
-		Role:      rsctx.RoleName,
-		Database:  rsctx.DatabaseName,
-		Schema:    rsctx.SchemaName,
-		Store:     rsctx.StoreName,
+		Statement:   query,
+		Role:        rsctx.RoleName,
+		Database:    rsctx.DatabaseName,
+		Schema:      rsctx.SchemaName,
+		Store:       rsctx.StoreName,
+		ComputePool: rsctx.ComputePoolName,
 		Parameters: &struct {
 			SessionID *string "json:\"sessionID,omitempty\""
 			Timezone  *string "json:\"timezone,omitempty\""
