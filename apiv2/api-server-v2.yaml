@@ -25,10 +25,10 @@ components:
           description: "Database schema to add to search path for name resolution. This value is case sensitive"
           type: string
         store:
-          description: "Store to add to search path for name resolution. This value is case sensitive"
+          description: "Store to use when executing a statement. This value is case sensitive"
           type: string
         computePool:
-          description: "Compute_pool to add to search path for name resolution. This value is case sensitive"
+          description: "Compute_pool to use when executing a statement. This value is case sensitive"
           type: string
         # bindings:
         #   type: object

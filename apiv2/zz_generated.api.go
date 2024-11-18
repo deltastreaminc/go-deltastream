@@ -115,7 +115,7 @@ type ResultSetPartitionInfo struct {
 
 // StatementRequest defines model for StatementRequest.
 type StatementRequest struct {
-	// ComputePool Compute_pool to add to search path for name resolution. This value is case sensitive
+	// ComputePool Compute_pool to use when executing a statement. This value is case sensitive
 	ComputePool *string `json:"computePool,omitempty"`
 
 	// Database Database to add to search path for name resolution. This value is case sensitive
@@ -137,7 +137,7 @@ type StatementRequest struct {
 	// Statement DeltaStream SQL statement or batch of SQL statements to execute
 	Statement string `json:"statement"`
 
-	// Store Store to add to search path for name resolution. This value is case sensitive
+	// Store Store to use when executing a statement. This value is case sensitive
 	Store *string `json:"store,omitempty"`
 }
 
