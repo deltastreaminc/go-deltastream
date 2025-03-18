@@ -55,9 +55,13 @@ const (
 	SqlState3D021  SqlState = "3D021"
 	SqlState3D022  SqlState = "3D022"
 	SqlState3D023  SqlState = "3D023"
+	SqlState3D024  SqlState = "3D024"
+	SqlState3D025  SqlState = "3D025"
+	SqlState3D026  SqlState = "3D026"
 	SqlState3E001  SqlState = "3E001"
 	SqlState3E002  SqlState = "3E002"
 	SqlState3E003  SqlState = "3E003"
+	SqlState3E004  SqlState = "3E004"
 	SqlState42501  SqlState = "42501"
 	SqlState42601  SqlState = "42601"
 	SqlState42622  SqlState = "42622"
@@ -147,12 +151,16 @@ const (
 	SqlStateMissingParameter           = SqlState3D021
 	SqlStateInvalidPrivateLink         = SqlState3D022
 	SqlStateInvalidComputePool         = SqlState3D023
+	SqlStateInvalidUserdata            = SqlState3D024
+	SqlStateInvalidDataplane           = SqlState3D025
+	SqlStateInvalidPlaybook            = SqlState3D026
 
 	// Class 3E — Resource not ready
 
 	SqlStateStoreNotReady          = SqlState3E001
 	SqlStateSchemaRegistryNotReady = SqlState3E002
 	SqlStateRelationNotReady       = SqlState3E003
+	SqlStateComputePoolNotReady    = SqlState3E004
 
 	//Class 42 — Syntax Error or Access Rule Violation
 
