@@ -81,6 +81,7 @@ const (
 	SqlState42P16  SqlState = "42P016"
 	SqlState42P17  SqlState = "42P017"
 	SqlState42P18  SqlState = "42P018"
+	SqlState42P19  SqlState = "42P019"
 	SqlState42P001 SqlState = "42P001"
 	SqlState42P002 SqlState = "42P002"
 	SqlState57014  SqlState = "57014"
@@ -183,6 +184,7 @@ const (
 	SqlStateDuplicateFunctionSource      = SqlState42P16
 	SqlStateDuplicateRelation            = SqlState42P17
 	SqlStateDuplicateSchemaRegistry      = SqlState42P18
+	SqlStateDuplicateComputePool         = SqlState42P19
 	SqlStateAmbiguousOrganization        = SqlState42P001
 	SqlStateAmbiguousStore               = SqlState42P002
 
