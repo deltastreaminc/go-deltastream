@@ -200,6 +200,7 @@ func newStreamingRows(ctx context.Context, c *Conn, req apiv2.DataplaneRequest, 
 
 func (r *streamingRows) readMessages() {
 	defer close(r.readyChan)
+	defer close(r.dataChan)
 
 	r.conn.SetReadDeadline(time.Time{})
 	for {
@@ -312,7 +313,6 @@ func (r *streamingRows) ColumnTypeScanType(index int) reflect.Type {
 
 func (r *streamingRows) Close() error {
 	r.metadata = nil
-	close(r.dataChan)
 	err := r.conn.Close()
 	if err != nil {
 		return &ErrInterfaceError{message: "error while closing connection", wrapErr: err}
