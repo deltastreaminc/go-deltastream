@@ -74,6 +74,13 @@ func (Driver) OpenConnector(connStr string) (driver.Connector, error) {
 		options = append(options, WithSessionID(params.Get("sessionID")))
 	}
 
+	if params.Has("dataplaneScheme") || params.Has("dataplaneHost") {
+		options = append(options, WithDataplaneOverride(
+			params.Get("dataplaneScheme"),
+			params.Get("dataplaneHost"),
+		))
+	}
+
 	ctx := context.Background()
 	connector, err := ConnectorWithOptions(ctx, options...)
 	if err != nil {
@@ -104,6 +111,8 @@ type connectionOptions struct {
 	httpClient               *http.Client
 	authClient               AuthClient
 	enableColumnDisplayHints bool
+	dataplaneScheme          string // override scheme for dataplane URIs (e.g., "http")
+	dataplaneHost            string // override host[:port] for dataplane URIs (e.g., "localhost:8085")
 }
 
 func WithStaticToken(token string) func(*connectionOptions) {
@@ -145,6 +154,17 @@ func WithServer(server string) func(*connectionOptions) {
 func WithColumnDisplayHints() func(*connectionOptions) {
 	return func(o *connectionOptions) {
 		o.enableColumnDisplayHints = true
+	}
+}
+
+// WithDataplaneOverride overrides the scheme and host of dataplane URIs
+// returned by the API server. This is useful when the MCP v2 handler needs to
+// connect to the dataplane via localhost instead of the external hostname.
+// The path from the original dataplane URI is preserved.
+func WithDataplaneOverride(scheme, host string) func(*connectionOptions) {
+	return func(o *connectionOptions) {
+		o.dataplaneScheme = scheme
+		o.dataplaneHost = host
 	}
 }
 
@@ -216,6 +236,8 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 		sessionID:                c.opts.sessionID,
 		httpClient:               c.opts.httpClient,
 		enableColumnDisplayHints: c.opts.enableColumnDisplayHints,
+		dataplaneScheme:          c.opts.dataplaneScheme,
+		dataplaneHost:            c.opts.dataplaneHost,
 	}, nil
 }
 

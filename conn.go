@@ -27,6 +27,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -54,6 +55,8 @@ type Conn struct {
 	httpClient               *http.Client
 	sessionID                *string
 	enableColumnDisplayHints bool
+	dataplaneScheme          string // override scheme for dataplane URIs
+	dataplaneHost            string // override host[:port] for dataplane URIs
 	sync.RWMutex
 }
 
@@ -75,6 +78,26 @@ func (c *Conn) GetContext() apiv2.ResultSetContext {
 
 func (c *Conn) SetContext(rsctx apiv2.ResultSetContext) {
 	c.rsctx = &rsctx
+}
+
+// rewriteDataplaneURI overrides the scheme and host of a dataplane URI while
+// preserving the path, if a dataplane override is configured. This allows MCP v2
+// to redirect dataplane requests to localhost instead of the external hostname.
+func (c *Conn) rewriteDataplaneURI(dpreq *apiv2.DataplaneRequest) {
+	if c.dataplaneScheme == "" && c.dataplaneHost == "" {
+		return
+	}
+	u, err := url.Parse(dpreq.Uri)
+	if err != nil {
+		return // let downstream code handle the parse error
+	}
+	if c.dataplaneScheme != "" {
+		u.Scheme = c.dataplaneScheme
+	}
+	if c.dataplaneHost != "" {
+		u.Host = c.dataplaneHost
+	}
+	dpreq.Uri = u.String()
 }
 
 // Prepare implements driver.Conn.
@@ -170,6 +193,7 @@ func (c *Conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 	}
 
 	if rs.Metadata.DataplaneRequest != nil {
+		c.rewriteDataplaneURI(rs.Metadata.DataplaneRequest)
 		if rs.Metadata.DataplaneRequest.RequestType == apiv2.DataplaneRequestRequestTypeResultSet {
 			dpconn, err := NewDPConn(*rs.Metadata.DataplaneRequest, c.sessionID, c.httpClient)
 			if err != nil {
